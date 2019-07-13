@@ -1,139 +1,148 @@
 <template >
-    <div class="main">
-            <div class="calculator">
-                <div class="display">
-                        <div class="input">
-                            {{input}}
-                        </div>
-                        <div class="output">
-                            {{output}}
-                </div>
-                </div>
-                <div @click="clear()" class="btn">C</div>
-                <div @click="cancel()" class="btn">&larr;</div>
-                <div @click="enter('%')" class="btn">%</div>
-                <div @click="enter('/')" class="btn operator">÷</div>
-                <div @click="enter('7')" class="btn">7</div>
-                <div @click="enter('8')" class="btn">8</div>
-                <div @click="enter('9')" class="btn">9</div>
-                <div @click="enter('*')" class="btn operator">x</div>
-                <div @click="enter('4')" class="btn">4</div>
-                <div @click="enter('5')" class="btn">5</div>
-                <div @click="enter('6')" class="btn">6</div>
-                <div @click="enter('-')" class="btn operator">-</div>
-                <div @click="enter('1')" class="btn">1</div>
-                <div @click="enter('2')" class="btn">2</div>
-                <div @click="enter('3')" class="btn">3</div>
-                <div @click="enter('+')" class="btn operator">+</div>
-                <div @click="enter('0')" class="btn zero">0</div>
-                <div @click="enter('.')" class="btn">.</div>
-                <div @click="equal()" class="btn operator">=</div>
+  <div class="main">
+      <div class="calculator">
+            <div class="display">{{ current || '0'}}</div>
+            <div v-for="num in num1" class="btn">
+              <cal-button :val="num" @append="append" ></cal-button>
             </div>
+            <div class="btn" @click="percentage">%</div>
+            <div class="btn" @click="back">&larr;</div>
+            <div class="btn" @click="sub">-</div>
+            <div class="btn" @click="add">+</div>
+            <div class="btn" @click="divide">÷</div>
+            <div class="btn" @click="mul">×</div>
+            <div class="btn zero" @click="equal">=</div>
+            <div class="btn" @click="clear">C</div>
+            <div class="btn" @click="dot">.</div>
     </div>
-  
+  </div>
 </template>
 <script>
-export default {
-        data() {
-            return {
-                input: '',
-                output:'',
-                calculated:false
+    import calcButton from './calcButton'
+    export default {
+      components: {
+        'cal-button': calcButton
+      },
+      data() {
+        return {
+            current: '',
+            displayValue:'',
+            previous: null,
+            operator: null,
+            operatorClick: false,
+            num1: [ 9 , 8 , 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 ],
+            result: null
+        }
+      },
+      methods: {
+          clear() {
+            this.current = '';
+            this.displayValue='';
+            this.result='';
+          },
+          percentage() {
+            this.current = `${parseFloat(this.current) / 100}`
+          },
+          back() {
+            const arr = this.current.split('')
+            arr.pop()
+            this.current = arr.join('')
+          },
+          append(number) {
+            if(this.operatorClick){
+              this.current = '';
+              this.operatorClick = false;
             }
-        },
-        methods: {
-            clear() {
-                this.input=''
-                this.output=''
-            },
-            cancel(){
-                //this.input = this.input.slice(0, -1);
-                const arr = this.input.split('')
-                arr.pop()
-                this.input = arr.join('')
-            },
-            enter(keys){
-                if(!this.calculated){
-                    this.input +=keys
-                }
-                else{
-                    this.calculated = false
-                    this.input=''
-                    this.output=''
-                    this.input +=keys                
-                }
-            },
-            equal(){
-                if(this.input.includes('%')){
-                    const arr = this.input.split('')
-                    const newArr = []
-                    for(let i=0;i<arr.length;i++){
-                        if(arr[i]!='%'){
-                            newArr.push(arr[i])
-                        }
-                        else{
-                            newArr.push('/100')
-                        }
-                    }
-                    this.input = newArr.join('')
-                    console.log(newArr)
-                }
-                console.log(this.input)
-                this.output = eval(this.input)
-                this.calculated = true
+            this.current = `${this.current}${number}`;
+            this.appendDisplay(number);
+          },
+          appendDisplay(number)
+          {
+            this.displayValue = this.displayValue + number;
+          },
+          dot(){
+            if(this.current.indexOf('.') === -1){
+              this.append('.');
+              this.displayValue('.');
             }
-        },
-        
+          },
+          divide() {
+            this.operator = (a,b) => b/a;
+            this.setPrev();
+            this.appendDisplay('/');
+          },
+          mul() {
+            this.operator = (a,b) => a*b;
+            this.setPrev();
+             this.appendDisplay('*');
+          },
+          sub() {
+            this.operator = (a,b) => b-a;
+            this.setPrev();
+             this.appendDisplay('-');
+          },
+          add() {
+            this.operator = (a,b) => a+b;
+            this.setPrev();
+             this.appendDisplay('+');
+          },
+          equal() {
+            this.current = this.operator(
+              parseFloat(this.current),
+              parseFloat(this.previous)
+            );
+            this.previous = null;
+          },
+          setPrev() {
+            this.previous = this.current;
+            this.operatorClick = true;
+          }
+      }
     }
 </script>
 <style scoped>
 
-            .main{
-                background-image: url("1.jpg");
-                width:50%;
-                height:auto;
-                background-color: rgb(201, 42, 42);
-                margin:0 auto;           
-                border-radius: 10px;
-                box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.4), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-            }
-            .calculator {
-            margin: 0 auto;
-            width: 400px;
-            height: 500px;
-            font-size: 40px;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-auto-rows: minmax(50px, auto);
-         
-            }
-            .display {
-            grid-column: 1 / 5;
-            background-color: #333;
-            color: white;
-            }
-            .input{
-                min-width: 280px;
-                width:100%;
-                margin:auto 0;
-                color:white;
-            }
-            .output{
-                min-width: 280px;
-                width:100%;
-                margin:auto 0;
-                color:white;
-                text-align: left;
-            }
-            .zero {
-            grid-column: 1 / 3;
-            }
-            .btn {
-            background-color: #F2F2F2;
-            border: 1px solid #999;
-            }
-            .operator {
-            background-color: orange;
-            color: white;
-            }
+  .main{
+    background-image: url("1.jpg");
+    width:50%;
+    height:auto;
+    background-color: rgb(201, 42, 42);
+    margin:0 auto;           
+    border-radius: 10px;
+    grid-column:  1 / 5;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.4), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  }
+  .calculator {
+  margin: 0 auto;
+  width: 400px;
+  height: 500px;
+  font-size: 40px;
+  display: grid;
+  border: 1px solid black;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(50px, auto);
+
+  }
+  .display {
+  grid-column: 1 / 5;
+  background-color: #333;
+  color: white;
+  }
+ 
+  .zero {
+  grid-column: 1 / 3;
+  }
+  .btn {
+  background-color: #F2F2F2;
+  border: 1px solid #999;
+  padding: 0 0 0 0;
+  }
+  .btn:hover{
+    background-color:grey;
+  }
+  .operator {
+  background-color: orange;
+  color: white;
+  border: 1px solid #999;
+  }
 </style>
